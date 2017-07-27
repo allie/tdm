@@ -1,0 +1,4 @@
+package: github.com/allie/tdm
+import:
+- package: github.com/ChimeraCoder/anaconda
+- package: github.com/gotk3/gotk3

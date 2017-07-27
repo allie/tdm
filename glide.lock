@@ -1,0 +1,8 @@
+hash: 7e18687f5c0957bcde307b8c851e632791c5c9faa556c406fa760ec41fdb1bad
+updated: 2017-07-26T23:04:57.534280669-04:00
+imports:
+- name: github.com/ChimeraCoder/anaconda
+  version: 0530dae79525a856cc778e15c4c2b03c3f6934b9
+- name: github.com/gotk3/gotk3
+  version: 0d1210c307409b41ba83f09140fae3a342ac2161
+testImports: []
