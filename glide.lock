@@ -1,8 +1,10 @@
-hash: 7e18687f5c0957bcde307b8c851e632791c5c9faa556c406fa760ec41fdb1bad
-updated: 2017-07-26T23:04:57.534280669-04:00
+hash: 3d833fd3ca6f2c2daabcd5495e02a398b61904ab22656c8c2a5ccbabfe318482
+updated: 2017-07-26T22:19:30.935159245-05:00
 imports:
 - name: github.com/ChimeraCoder/anaconda
   version: 0530dae79525a856cc778e15c4c2b03c3f6934b9
 - name: github.com/gotk3/gotk3
   version: 0d1210c307409b41ba83f09140fae3a342ac2161
+- name: github.com/joho/godotenv
+  version: 726cc8b906e3d31c70a9671c90a13716a8d3f50d
 testImports: []
