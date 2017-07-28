@@ -17,7 +17,7 @@ func main() {
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 
 	client := tdm.NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret)
-	dms, err := client.GetDms()
+	dms, err := client.GetDms(tdm.DmParams{Count: 2})
 	if err != nil {
 		log.Fatalf("Failed getting DMs: %v", err)
 	}
