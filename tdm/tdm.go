@@ -23,6 +23,18 @@ func NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret string) 
 	return tdm
 }
 
+func (tdm *Tdm) SendDmToUsername(text, screenName string) (anaconda.DirectMessage, error) {
+	return tdm.api.PostDMToScreenName(text, screenName)
+}
+
+func (tdm *Tdm) SendDmToId(text string, userId int64) (anaconda.DirectMessage, error) {
+	return tdm.api.PostDMToUserId(text, userId)
+}
+
+func (tdm *Tdm) DeleteDm(id int64) (anaconda.DirectMessage, error) {
+	return tdm.api.DeleteDirectMessage(id, false)
+}
+
 func (tdm *Tdm) OpenStream() {
 	v := url.Values{}
 	v.Set("with", "user")
@@ -33,12 +45,24 @@ func (tdm *Tdm) CloseStream() {
 	tdm.stream.Stop()
 }
 
-func (tdm *Tdm) GetDmStream() (chan interface{}, error) {
+func (tdm *Tdm) GetDmStream() (chan anaconda.DirectMessage, error) {
 	if tdm.stream == nil {
 		return nil, fmt.Errorf("No open stream")
 	}
 
-	return tdm.stream.C, nil
+	dms := make(chan anaconda.DirectMessage)
+
+	filter := func(streamEvents <-chan interface{}) {
+		for event := range streamEvents {
+			if dm, ok := event.(anaconda.DirectMessage); ok {
+				dms <- dm
+			}
+		}
+	}
+
+	go filter(tdm.stream.C)
+
+	return dms, nil
 }
 
 func (tdm *Tdm) GetDms(p DmParams) ([]anaconda.DirectMessage, error) {
@@ -62,26 +86,36 @@ func (tdm *Tdm) GetSentDms(p DmParams) ([]anaconda.DirectMessage, error) {
 }
 
 func (tdm *Tdm) GetFriends() ([]anaconda.User, error) {
-	// TODO: Cross-reference GetFollowersListAll and GetFriendsListAll
-	// (and maybe info about followed users with open DMs)
-	// to get a list of followed people avialable for DM
+	// TODO: Use chans and a goroutine to fetch following info
+	// for every 100 friends as they come in
 
-	return nil, nil
+	friends := make([]anaconda.User, 1, 100)
+
+	v := url.Values{}
+	v.Set("skip_status", "true")
+	v.Set("include_user_entities", "false")
+
+	followingPages := tdm.api.GetFriendsListAll(v)
+	for page := range followingPages {
+		friends = append(friends, page.Friends...)
+	}
+
+	return friends, nil
 }
 
 type DmParams struct {
-	SinceId string
-	MaxId   string
+	SinceId int64
+	MaxId   int64
 	Count   int
 }
 
 func (p *DmParams) ToValues() url.Values {
 	v := url.Values{}
-	if p.SinceId != "" {
-		v.Set("since_id", p.SinceId)
+	if p.SinceId > 0 {
+		v.Set("since_id", strconv.FormatInt(p.SinceId, 10))
 	}
-	if p.MaxId != "" {
-		v.Set("max_id", p.MaxId)
+	if p.MaxId > 0 {
+		v.Set("max_id", strconv.FormatInt(p.MaxId, 10))
 	}
 	if p.Count > 0 {
 		v.Set("count", strconv.Itoa(p.Count))

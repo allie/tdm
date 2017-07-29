@@ -17,9 +17,17 @@ func main() {
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 
 	client := tdm.NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret)
-	dms, err := client.GetDms(tdm.DmParams{Count: 2})
+
+	client.OpenStream()
+	defer client.CloseStream()
+
+	dms, err := client.GetDmStream()
 	if err != nil {
-		log.Fatalf("Failed getting DMs: %v", err)
+		log.Fatalf("Failed getting stream: %v", err)
+	}
+
+	for dm := range dms {
+		log.Printf("\nNew DM: %v\n", dm)
 	}
 
 	log.Printf("%v", dms)
