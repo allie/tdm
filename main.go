@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/allie/tdm/tdm"
 	"github.com/joho/godotenv"
@@ -16,19 +17,14 @@ func main() {
 	accessToken := os.Getenv("ACCESS_TOKEN")
 	accessTokenSecret := os.Getenv("ACCESS_TOKEN_SECRET")
 
-	client := tdm.NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret)
-
-	client.OpenStream()
-	defer client.CloseStream()
-
-	dms, err := client.GetDmStream()
+	client, err := tdm.NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret)
 	if err != nil {
-		log.Fatalf("Failed getting stream: %v", err)
+		log.Fatalf("Failed creating tdm client: %v", err)
 	}
 
-	for dm := range dms {
-		log.Printf("\nNew DM: %v\n", dm)
-	}
+	client.Log()
 
-	log.Printf("%v", dms)
+	for {
+		time.Sleep(time.Second)
+	}
 }

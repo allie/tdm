@@ -3,24 +3,125 @@ package tdm
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strconv"
+	"sync"
 
 	"github.com/ChimeraCoder/anaconda"
 )
 
 type Tdm struct {
+	sync.RWMutex
 	api    *anaconda.TwitterApi
 	stream *anaconda.Stream
+	user   anaconda.User
+	chats  map[int64]*Chat
 }
 
-func NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret string) *Tdm {
+type Chat struct {
+	username    string
+	userID      int64
+	receivedDms []anaconda.DirectMessage
+	sentDms     []anaconda.DirectMessage
+}
+
+func NewTdm(consumerKey, consumerSecret, accessToken, accessTokenSecret string) (*Tdm, error) {
 	anaconda.SetConsumerKey(consumerKey)
 	anaconda.SetConsumerSecret(consumerSecret)
-	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
-	tdm := new(Tdm)
-	tdm.api = api
 
-	return tdm
+	tdm := new(Tdm)
+	tdm.api = anaconda.NewTwitterApi(accessToken, accessTokenSecret)
+	if err := tdm.getUser(); err != nil {
+		return nil, err
+	}
+	if err := tdm.initChats(); err != nil {
+		return nil, err
+	}
+
+	if err := tdm.FetchChats(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed fetching chats: %v", err)
+	}
+
+	tdm.OpenStream()
+
+	dmStream, err := tdm.GetDmStream()
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for dm := range dmStream {
+			tdm.addDm(dm)
+			tdm.Log()
+		}
+	}()
+
+	return tdm, nil
+}
+
+func (tdm *Tdm) getUser() error {
+	v := url.Values{}
+	v.Set("include_entities", "false")
+	v.Set("skip_status", "true")
+
+	user, err := tdm.api.GetSelf(v)
+	if err != nil {
+		return err
+	}
+
+	tdm.user = user
+
+	return nil
+}
+
+func (tdm *Tdm) initChats() error {
+	// TODO fetch from cache on disk or something
+
+	tdm.chats = make(map[int64]*Chat, 1)
+
+	return nil
+}
+
+func (tdm *Tdm) FetchChats() error {
+	dms, err := tdm.GetDms(DmParams{Count: 200})
+	if err != nil {
+		return err
+	}
+
+	for _, dm := range dms {
+		tdm.addDm(dm)
+	}
+
+	return nil
+}
+
+func (tdm *Tdm) addDm(dm anaconda.DirectMessage) error {
+	var chatterID int64
+	var chatterUsername string
+	if dm.SenderId == tdm.user.Id {
+		chatterID = dm.RecipientId
+		chatterUsername = dm.RecipientScreenName
+	} else {
+		chatterID = dm.SenderId
+		chatterUsername = dm.SenderScreenName
+	}
+
+	tdm.Lock()
+	chat, ok := tdm.chats[chatterID]
+	if !ok {
+		newChat := Chat{username: chatterUsername, userID: chatterID}
+		tdm.chats[chatterID] = &newChat
+		chat = &newChat
+	}
+
+	if dm.SenderId == tdm.user.Id {
+		chat.sentDms = append(chat.sentDms, dm)
+	} else {
+		chat.receivedDms = append(chat.receivedDms, dm)
+	}
+	tdm.Unlock()
+
+	return nil
 }
 
 func (tdm *Tdm) SendDmToUsername(text, screenName string) (anaconda.DirectMessage, error) {
@@ -101,6 +202,33 @@ func (tdm *Tdm) GetFriends() ([]anaconda.User, error) {
 	}
 
 	return friends, nil
+}
+
+func (tdm *Tdm) Log() {
+	tdm.RLock()
+
+	fmt.Printf("{\n")
+	fmt.Printf("\tUser: %+v\n", tdm.user.ScreenName)
+	fmt.Printf("\tChats:\n")
+	for _, chat := range tdm.chats {
+		chat.Log()
+	}
+	fmt.Printf("}\n\n")
+
+	tdm.RUnlock()
+}
+
+func (chat *Chat) Log() {
+	fmt.Printf("\t\tChatter: %v\n", chat.username)
+	fmt.Printf("\t\tSent: \n")
+	for _, sentDm := range chat.sentDms {
+		fmt.Printf("\t\t\tText: %v\n", sentDm.Text)
+	}
+
+	fmt.Printf("\t\tReceived: \n")
+	for _, receivedDm := range chat.receivedDms {
+		fmt.Printf("\t\t\tText: %v\n", receivedDm.Text)
+	}
 }
 
 type DmParams struct {
