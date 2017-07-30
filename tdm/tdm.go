@@ -83,7 +83,17 @@ func (tdm *Tdm) initChats() error {
 }
 
 func (tdm *Tdm) FetchChats() error {
+	// TODO: Use goroutines
 	dms, err := tdm.GetDms(DmParams{Count: 200})
+	if err != nil {
+		return err
+	}
+
+	for _, dm := range dms {
+		tdm.addDm(dm)
+	}
+
+	dms, err = tdm.GetSentDms(DmParams{Count: 200})
 	if err != nil {
 		return err
 	}
