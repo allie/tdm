@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/allie/tdm/tdm"
+	"github.com/allie/tdm/gui"
 	"github.com/joho/godotenv"
 )
 
@@ -24,7 +24,7 @@ func main() {
 
 	client.Log()
 
-	for {
-		time.Sleep(time.Second)
-	}
+	gui := gui.NewGui()
+	gui.Init()
+	gui.Loop()
 }

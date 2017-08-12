@@ -4,3 +4,4 @@ import:
 - package: github.com/gotk3/gotk3
 - package: github.com/joho/godotenv
   version: ^1.1.0
+- package: github.com/ChimeraCoder/tokenbucket

@@ -1,8 +1,20 @@
-hash: 3d833fd3ca6f2c2daabcd5495e02a398b61904ab22656c8c2a5ccbabfe318482
-updated: 2017-07-26T22:19:30.935159245-05:00
+hash: dd7f10a924c778d7d8dc2f58fc4afae7c303608328fac7da8c17fb7a648dc6f1
+updated: 2017-08-11T21:15:37.27879389-04:00
 imports:
+- name: github.com/azr/backoff
+  version: 53511d3c733003985b0b76f733df1f4d0095ee6a
 - name: github.com/ChimeraCoder/anaconda
   version: 0530dae79525a856cc778e15c4c2b03c3f6934b9
+- name: github.com/ChimeraCoder/tokenbucket
+  version: c5a927568de7aad8a58127d80bcd36ca4e71e454
+- name: github.com/dustin/go-jsonpointer
+  version: ba0abeacc3dcca5b9b20f31509c46794edbc9965
+- name: github.com/dustin/gojson
+  version: 2e71ec9dd5adce3b168cd0dbde03b5cc04951c30
+- name: github.com/garyburd/go-oauth
+  version: 166ce8d672783fbb5a72247c3cf459267717e1ec
+  subpackages:
+  - oauth
 - name: github.com/gotk3/gotk3
   version: 0d1210c307409b41ba83f09140fae3a342ac2161
 - name: github.com/joho/godotenv
